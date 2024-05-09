@@ -80,7 +80,7 @@ def main():
   model.load_state_dict(state['model_state_dict'], strict=True)
 
   t0 = time.perf_counter()
-  map, spearman1, spearman2 = evaluate(model, test_loader, dataset, device)
+  map, spearman = evaluate(model, test_loader, dataset, device)
   t1 = time.perf_counter()
   
   print('map={:.2f} spearman={:.2f} dt={:.2f}sec'.format(map, spearman, t1 - t0))
