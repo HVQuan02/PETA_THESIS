@@ -53,11 +53,11 @@ def validate_one_epoch(model, val_loader, val_dataset, device):
   gidx = 0
   with torch.no_grad():
     for batch in val_loader:
-      feats, _ = batch
+      feats, _, _ = batch
       feats = feats.to(device)
-      out_data = model(feats)
-      shape = out_data.shape[0]
-      scores[gidx:gidx+shape, :] = out_data.cpu()
+      logits, _ = model(feats)
+      shape = logits.shape[0]
+      scores[gidx:gidx+shape, :] = logits.cpu()
       gidx += shape
   return AP_partial(val_dataset.labels, scores.numpy())[1]
 
@@ -65,12 +65,12 @@ def train_one_epoch(ema_model, model, train_loader, crit, opt, sched, device):
   model.train()
   epoch_loss = 0
   for batch in train_loader:
-    feats, label = batch
+    feats, labels, _ = batch
     feats = feats.to(device)
-    label = label.to(device)
+    labels = labels.to(device)
     opt.zero_grad()
-    out_data = model(feats)
-    loss = crit(out_data, label)
+    logits, _ = model(feats)
+    loss = crit(logits, labels)
     loss.backward()
     opt.step()
     ema_model.update_parameters(model)
@@ -108,7 +108,7 @@ def main():
 
   if args.dataset == 'cufed':
     train_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_train=True, img_size=args.img_size, album_clip_length=args.album_clip_length)
-    val_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_train=False, is_val=True, img_size=args.img_size, album_clip_length=args.album_clip_length)
+    val_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_train=False, img_size=args.img_size, album_clip_length=args.album_clip_length)
   else:
     exit("Unknown dataset!")
 
