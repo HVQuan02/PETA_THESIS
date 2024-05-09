@@ -104,6 +104,8 @@ def main():
   torch.manual_seed(args.seed)
   torch.cuda.manual_seed(args.seed)
 
+  device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
   if args.dataset == 'cufed':
     train_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_train=True, img_size=args.img_size, album_clip_length=args.album_clip_length)
     val_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_train=False, is_val=True, img_size=args.img_size, album_clip_length=args.album_clip_length)
@@ -117,7 +119,6 @@ def main():
   else:
     exit("Unknown loss function!")
      
-  device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
   train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, num_workers=args.num_workers, shuffle=False, pin_memory=True)
   val_loader = DataLoader(val_dataset, batch_size=args.val_batch_size, num_workers=args.num_workers, shuffle=False)
 
@@ -126,7 +127,6 @@ def main():
     print("num samples of train = {}".format(len(train_dataset)))
     print("num samples of val = {}".format(len(val_dataset)))
 
-  start_epoch = 0
   model = create_model(args).to(device)
   ema_model = AveragedModel(model, multi_avg_fn=get_ema_multi_avg_fn(0.999))
 
@@ -155,12 +155,13 @@ def main():
   if args.resume:
       data = torch.load(args.resume)
       start_epoch = data['epoch']
-      model.load_state_dict(data['model'], strict=True)
+      model.load_state_dict(data['model_state_dict'], strict=True)
       opt.load_state_dict(data['opt_state_dict'])
       sched.load_state_dict(data['sched_state_dict'])
       if args.verbose:
           print("resuming from epoch {}".format(start_epoch))
 
+  start_epoch = 0
   for epoch in range(start_epoch, args.max_epochs):
     t0 = time.perf_counter()
     train_loss = train_one_epoch(ema_model, model, train_loader, crit, opt, sched, device)
@@ -172,32 +173,29 @@ def main():
 
     epoch_cnt = epoch + 1
     is_early_stopping, is_save_ckpt = early_stopper.early_stop(val_mAP)
+
+    model_config = {
+      'epoch': epoch_cnt,
+      'model_state_dict': model.state_dict(),
+      'loss': train_loss,
+      'opt_state_dict': opt.state_dict(),
+      'sched_state_dict': sched.state_dict()
+    }
+
+    # save last model
+    torch.save(model_config, os.path.join(args.save_folder, 'last-PETA-cufed.pt')) 
+
     if is_save_ckpt:
-      torch.save({
-        'epoch': epoch_cnt,
-        'model': model.state_dict(),
-        'loss': train_loss,
-        'opt_state_dict': opt.state_dict(),
-        'sched_state_dict': sched.state_dict()
-      }, os.path.join(args.save_folder, 'PETA-cufed.pt')) 
+      torch.save(model_config, os.path.join(args.save_folder, 'best-PETA-cufed.pt')) 
          
-    if is_early_stopping:
+    if is_early_stopping or epoch_cnt == args.max_epoch:
       # Update bn statistics for the ema_model at the end
       update_bn(train_loader, ema_model)
-
-      # save last model
-      torch.save({
-        'epoch': epoch_cnt,
-        'model': model.state_dict(),
-        'loss': train_loss,
-        'opt_state_dict': opt.state_dict(),
-        'sched_state_dict': sched.state_dict()
-      }, os.path.join(args.save_folder, 'PETA-cufed-last.pt')) 
 
       # save ema model
       torch.save({
         'epoch': epoch_cnt,
-        'model': ema_model.state_dict()
+        'model_state_dict': ema_model.state_dict()
       }, os.path.join(args.save_folder, 'EMA-PETA-cufed.pt'))
 
       print('Stop at epoch {}'.format(epoch_cnt)) 

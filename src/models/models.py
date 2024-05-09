@@ -41,7 +41,7 @@ class fTResNet(TResNet):
     #     return logits
     # else:
     #     return (logits, attn_mat)
-    return logits
+    return logits, self.attention
 
 
 class fResNet(ResNet):
