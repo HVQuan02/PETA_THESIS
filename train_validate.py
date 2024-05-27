@@ -13,7 +13,7 @@ from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn, update_bn
 from datasets import CUFED
 
 parser = argparse.ArgumentParser(description='PETA: Photo Album Event Recognition')
-parser.add_argument('--seed', default=2024, help='seed for randomness')
+parser.add_argument('--seed', default=2021, help='seed for randomness')
 parser.add_argument('--resume', default=None, help='checkpoint to resume training')
 parser.add_argument('--model_name', type=str, default='mtresnetaggregate')
 parser.add_argument('--num_classes', type=int, default=23)
@@ -38,8 +38,8 @@ parser.add_argument('--lr_step', type=int, default=10)
 parser.add_argument('--lr_milestones', nargs="+", type=int, default=[20, 40, 60, 80, 100, 120], help='milestones of learning decay')
 parser.add_argument('--weight_decay', type=float, default=1e-4, help='weight decay rate')
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum for sgd optimizer')
-parser.add_argument('--warmup_epochs', type=int, default=5, help='number of warmup epochs')
-parser.add_argument('--max_epochs', type=int, default=150, help='max number of epochs to train')
+parser.add_argument('--warmup_epochs', type=int, default=10, help='number of warmup epochs')
+parser.add_argument('--max_epochs', type=int, default=100, help='max number of epochs to train')
 parser.add_argument('--save_folder', default='weights', help='directory to save checkpoints')
 parser.add_argument('--loss', type=str, default='asymmetric', help='loss function')
 parser.add_argument('--patience', type=int, default=20, help='patience of early stopping')
@@ -75,7 +75,7 @@ def train_one_epoch(ema_model, model, train_loader, crit, opt, sched, device):
     opt.step()
     ema_model.update_parameters(model)
     epoch_loss += loss.item()
-    sched.step()
+    sched.step() # change
   return epoch_loss / len(train_loader)
 
 class EarlyStopper:
@@ -119,13 +119,13 @@ def main():
   else:
     exit("Unknown loss function!")
      
-  train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, num_workers=args.num_workers, shuffle=False, pin_memory=True)
-  val_loader = DataLoader(val_dataset, batch_size=args.val_batch_size, num_workers=args.num_workers, shuffle=False)
+  train_loader = DataLoader(train_dataset, batch_size=args.train_batch_size, num_workers=args.num_workers)
+  val_loader = DataLoader(val_dataset, batch_size=args.val_batch_size, num_workers=args.num_workers)
 
   if args.verbose:
     print("running on {}".format(device))
-    print("num samples of train = {}".format(len(train_dataset)))
-    print("num samples of val = {}".format(len(val_dataset)))
+    print("train_set={}".format(len(train_dataset)))
+    print("val_set={}".format(len(val_dataset)))
 
   model = create_model(args).to(device)
   ema_model = AveragedModel(model, multi_avg_fn=get_ema_multi_avg_fn(0.999))
