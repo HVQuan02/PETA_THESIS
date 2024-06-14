@@ -13,7 +13,7 @@ from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn, update_bn
 from datasets import CUFED
 
 parser = argparse.ArgumentParser(description='PETA: Photo Album Event Recognition')
-parser.add_argument('--seed', default=2021, help='seed for randomness')
+parser.add_argument('--seed', default=2024, help='seed for randomness')
 parser.add_argument('--resume', default=None, help='checkpoint to resume training')
 parser.add_argument('--model_name', type=str, default='mtresnetaggregate')
 parser.add_argument('--num_classes', type=int, default=23)
