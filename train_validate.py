@@ -40,7 +40,7 @@ parser.add_argument('--weight_decay', type=float, default=1e-4, help='weight dec
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum for sgd optimizer')
 parser.add_argument('--warmup_epochs', type=int, default=10, help='number of warmup epochs')
 parser.add_argument('--max_epochs', type=int, default=150, help='max number of epochs to train')
-parser.add_argument('--save_folder', default='/kaggle/working/PETA_Thesis/weights', help='directory to save checkpoints')
+parser.add_argument('--save_dir', default='weights', help='directory to save checkpoints')
 parser.add_argument('--loss', type=str, default='asymmetric', help='loss function')
 parser.add_argument('--patience', type=int, default=30, help='patience of early stopping')
 parser.add_argument('--min_delta', type=float, default=1, help='min delta of early stopping')
@@ -104,6 +104,9 @@ def main():
   torch.manual_seed(args.seed)
   torch.cuda.manual_seed(args.seed)
 
+  if not os.path.exists(args.save_dir):
+     os.mkdir(args.save_dir)
+    
   device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
   if args.dataset == 'cufed':
@@ -183,10 +186,10 @@ def main():
     }
 
     # save last model
-    torch.save(model_config, os.path.join(args.save_folder, 'last-PETA-cufed.pt')) 
+    torch.save(model_config, os.path.join(args.save_dir, 'last-PETA-cufed.pt')) 
 
     if is_save_ckpt:
-      torch.save(model_config, os.path.join(args.save_folder, 'best-PETA-cufed.pt')) 
+      torch.save(model_config, os.path.join(args.save_dir, 'best-PETA-cufed.pt')) 
          
     if is_early_stopping or epoch_cnt == args.max_epochs:
       # Update bn statistics for the ema_model at the end
@@ -196,7 +199,7 @@ def main():
       torch.save({
         'epoch': epoch_cnt,
         'model_state_dict': ema_model.state_dict()
-      }, os.path.join(args.save_folder, 'EMA-PETA-cufed.pt'))
+      }, os.path.join(args.save_dir, 'EMA-PETA-cufed.pt'))
 
       print('Stop at epoch {}'.format(epoch_cnt)) 
       break
