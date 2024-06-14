@@ -107,8 +107,8 @@ def main():
   device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
   if args.dataset == 'cufed':
-    train_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_train=True, img_size=args.img_size, album_clip_length=args.album_clip_length)
-    val_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_train=False, img_size=args.img_size, album_clip_length=args.album_clip_length)
+    train_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, img_size=args.img_size, album_clip_length=args.album_clip_length)
+    val_dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_val=True, img_size=args.img_size, album_clip_length=args.album_clip_length)
   else:
     exit("Unknown dataset!")
 
