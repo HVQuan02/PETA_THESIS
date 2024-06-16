@@ -40,7 +40,7 @@ parser.add_argument('--weight_decay', type=float, default=1e-4, help='weight dec
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum for sgd optimizer')
 parser.add_argument('--warmup_epochs', type=int, default=10, help='number of warmup epochs')
 parser.add_argument('--max_epochs', type=int, default=150, help='max number of epochs to train')
-parser.add_argument('--save_dir', default='weights', help='directory to save checkpoints')
+parser.add_argument('--save_dir', default='/kaggle/working/weights', help='directory to save checkpoints')
 parser.add_argument('--loss', type=str, default='asymmetric', help='loss function')
 parser.add_argument('--patience', type=int, default=30, help='patience of early stopping')
 parser.add_argument('--min_delta', type=float, default=1, help='min delta of early stopping')
