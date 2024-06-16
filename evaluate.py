@@ -9,16 +9,15 @@ from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from datasets import CUFED
 
 parser = argparse.ArgumentParser(description='PETA: Photo Album Event Recognition')
-parser.add_argument('--seed', type=int, default=2024)
-parser.add_argument('--model_path', type=str, default='./weights/PETA-cufed.pt')
+parser.add_argument('--model_path', type=str, default=None)
 parser.add_argument('--model_name', type=str, default='mtresnetaggregate')
 parser.add_argument('--num_classes', type=int, default=23)
-parser.add_argument('--dataset', default='cufed', choices=['cufed', 'pec', 'holidays'])
+parser.add_argument('--dataset', default='cufed', choices=['cufed', 'pec'])
 parser.add_argument('--dataset_path', type=str, default='/kaggle/input/thesis-cufed/CUFED')
-parser.add_argument('--split_path', type=str, default='/kaggle/input/cufed-full-split')
+parser.add_argument('--split_dir', type=str, default='/kaggle/input/cufed-full-split')
 parser.add_argument('--dataset_type', type=str, default='ML_CUFED')
-parser.add_argument('--batch_size', type=int, default=32, help='batch size') # change
-parser.add_argument('--num_workers', type=int, default=2, help='number of workers for data loader')
+parser.add_argument('--batch_size', type=int, default=32, help='batch size')
+parser.add_argument('--num_workers', type=int, default=4, help='number of workers for data loader')
 parser.add_argument('--ema', action='store_true', help='use ema model or not')
 parser.add_argument('-v', '--verbose', action='store_true', help='show details')
 parser.add_argument('--img_size', type=int, default=224)
@@ -55,14 +54,10 @@ def evaluate(model, test_loader, test_dataset, device):
   return map, spearman
 
 def main():
-  np.random.seed(args.seed)
-  torch.manual_seed(args.seed)
-  torch.cuda.manual_seed(args.seed)
-
   device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
   if args.dataset == 'cufed':
-    dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_path, is_train=False, img_size=args.img_size, album_clip_length=args.album_clip_length)
+    dataset = CUFED(root_dir=args.dataset_path, split_dir=args.split_dir, is_train=False, img_size=args.img_size, album_clip_length=args.album_clip_length)
   else:
     exit("Unknown dataset!")
 
@@ -70,15 +65,15 @@ def main():
 
   if args.verbose:
     print("running on {}".format(device))
-    print("num of test sample={}".format(len(dataset)))
+    print("test_set={}".format(len(dataset)))
 
   # Setup model
-  print('creating and loading the model...')
   state = torch.load(args.model_path, map_location='cpu')
   model = create_model(args).to(device)
   if args.ema:
     model = AveragedModel(model, multi_avg_fn=get_ema_multi_avg_fn(0.999))
   model.load_state_dict(state['model_state_dict'], strict=True)
+  print('load model from epoch {}'.format(state['epoch']))
 
   t0 = time.perf_counter()
   map, spearman = evaluate(model, test_loader, dataset, device)
