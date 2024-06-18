@@ -18,7 +18,7 @@ class BaseOptions():
         parser.add_argument('--remove_model_jit', type=int, default=None)
         parser.add_argument('--use_transformer', type=int, default=1)
         parser.add_argument('--transformers_pos', type=int, default=1)
-        parser.add_argument('--threshold', type=float, default=0.8)
+        parser.add_argument('--threshold', type=float, default=0.75)
         parser.add_argument('-v', '--verbose', action='store_true', help='show details')
         self.initialized = True
         return parser
