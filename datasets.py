@@ -23,7 +23,6 @@ def get_album(album_path, album_importance, album_clip_length, img_size):
         tensor_batch[i] = torch.from_numpy(np_img).float() / 255.0
         importance_scores[i] = img_score_dict[img_name]
     tensor_batch = tensor_batch.permute(0, 3, 1, 2)   # HWC to CHW
-    img_score_dict.clear() # save memory
     return tensor_batch, importance_scores
 
 class CUFED(Dataset):
@@ -34,57 +33,54 @@ class CUFED(Dataset):
                     'Protest', 'ReligiousActivity', 'Show', 'Sports', 'ThemePark',
                     'UrbanTrip', 'Wedding', 'Zoo']
 
-    def __init__(self, root_dir, split_dir, is_train=True, is_val=False, img_size=224, album_clip_length=32):
+    def __init__(self, root_dir, split_dir, is_train=True, img_size=224, album_clip_length=30):
         self.img_size = img_size
         self.album_clip_length = album_clip_length
         self.root_dir = root_dir
+
         if is_train:
-            if is_val:
-                self.phase = 'val'
-            else:
-                self.phase = 'train'
+            self.phase = 'train'
         else:
             self.phase = 'test'
 
         if self.phase == 'train':
             split_path = os.path.join(split_dir, 'train_split.txt')
-        elif self.phase == 'val':
-            split_path = os.path.join(split_dir, 'val_split.txt')
         else:
             split_path = os.path.join(split_dir, 'test_split.txt')
 
         with open(split_path, 'r') as f:
             album_names = f.readlines()
-        vidname_list = [name.strip() for name in album_names]
+        album_list = [name.strip() for name in album_names]
+        if '33_65073328@N00' in album_list:
+            album_list.remove('33_65073328@N00') # remove weird album
+        self.albums = album_list
 
         label_path = os.path.join(root_dir, "event_type.json")
         with open(label_path, 'r') as f:
             album_labels = json.load(f)
 
-        importance_path = os.path.join(root_dir, "image_importance.json")
-        with open(importance_path, 'r') as f:
-            album_importance = json.load(f)
+        if self.phase == 'test':
+            importance_path = os.path.join(root_dir, "image_importance.json")
+            with open(importance_path, 'r') as f:
+                album_importance = json.load(f)
+            self.importance = album_importance
 
-        if '33_65073328@N00' in vidname_list:
-            vidname_list.remove('33_65073328@N00') # remove weird album
-
-        labels_np = np.zeros((len(vidname_list), len(self.event_labels)), dtype=np.float32)
-
-        for i, vidname in enumerate(vidname_list):
+        labels_np = np.zeros((len(album_list), len(self.event_labels)), dtype=np.float32)
+        for i, vidname in enumerate(album_list):
             for lbl in album_labels[vidname]:
                 idx = self.event_labels.index(lbl)
                 labels_np[i, idx] = 1
-
         self.labels = labels_np
-        self.importance = album_importance
-        self.videos = vidname_list
     
     def __len__(self):
-        return len(self.videos)
+        return len(self.albums)
     
     def __getitem__(self, idx):
+        album = self.albums[idx]
         dataset_path = os.path.join(self.root_dir, 'images')
-        album_path = os.path.join(dataset_path, self.videos[idx])
-        album_importance = self.importance[self.videos[idx]]
-        album_tensor, importance_scores = get_album(album_path, album_importance, self.album_clip_length, self.img_size)
-        return album_tensor, self.labels[idx], importance_scores
+        album_path = os.path.join(dataset_path, album)
+        if self.phase == 'test':
+            album_importance = self.importance[album]
+            album_tensor, importance_scores = get_album(album_path, album_importance, self.album_clip_length, self.img_size)
+            return album_tensor, self.labels[idx], importance_scores
+        return album_tensor, self.labels[idx]
