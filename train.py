@@ -31,7 +31,7 @@ def validate_one_epoch(model, val_loader, val_dataset, device):
 def train_one_epoch(ema_model, model, train_loader, crit, opt, sched, device):
   model.train()
   epoch_loss = 0
-  for feats, labels in train_loader:
+  for feats, labels, _ in train_loader:
     feats = feats.to(device)
     labels = labels.to(device)
     opt.zero_grad()

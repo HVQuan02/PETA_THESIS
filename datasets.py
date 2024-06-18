@@ -59,11 +59,10 @@ class CUFED(Dataset):
         with open(label_path, 'r') as f:
             album_labels = json.load(f)
 
-        if self.phase == 'test':
-            importance_path = os.path.join(root_dir, "image_importance.json")
-            with open(importance_path, 'r') as f:
-                album_importance = json.load(f)
-            self.importance = album_importance
+        importance_path = os.path.join(root_dir, "image_importance.json")
+        with open(importance_path, 'r') as f:
+            album_importance = json.load(f)
+        self.importance = album_importance
 
         labels_np = np.zeros((len(album_list), len(self.event_labels)), dtype=np.float32)
         for i, vidname in enumerate(album_list):
@@ -79,8 +78,6 @@ class CUFED(Dataset):
         album = self.albums[idx]
         dataset_path = os.path.join(self.root_dir, 'images')
         album_path = os.path.join(dataset_path, album)
-        if self.phase == 'test':
-            album_importance = self.importance[album]
-            album_tensor, importance_scores = get_album(album_path, album_importance, self.album_clip_length, self.img_size)
-            return album_tensor, self.labels[idx], importance_scores
-        return album_tensor, self.labels[idx]
+        album_importance = self.importance[album]
+        album_tensor, importance_scores = get_album(album_path, album_importance, self.album_clip_length, self.img_size)
+        return album_tensor, self.labels[idx], importance_scores

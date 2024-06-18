@@ -58,7 +58,7 @@ def main():
   else:
     exit("Unknown dataset!")
 
-  test_loader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False)
+  test_loader = DataLoader(test_dataset, batch_size=args.test_batch_size, num_workers=args.num_workers, shuffle=False)
 
   if args.verbose:
     print("running on {}".format(device))
