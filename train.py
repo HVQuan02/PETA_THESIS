@@ -120,7 +120,7 @@ def main():
   else:
      exit('Unknown optimization lr')
 
-  early_stopper = EarlyStopper(patience=args.patience, min_delta=args.min_delta, threshold=args.stopping_threshold)
+  early_stopper = EarlyStopper(patience=args.patience, min_delta=args.min_delta, stopping_threshold=args.stopping_threshold)
   start_epoch = 0
 
   if args.resume:
