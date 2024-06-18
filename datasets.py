@@ -5,26 +5,6 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
-def get_album(album_path, album_importance, album_clip_length, img_size):
-    img_score_dict = {}
-    for _, image, score in album_importance:
-        img_score_dict[image] = score
-    album_name = os.path.basename(album_path)
-    files = os.listdir(album_path)
-    n_files = len(files)
-    idx_fetch = np.linspace(0, n_files-1, album_clip_length, dtype=int)
-    tensor_batch = torch.zeros(len(idx_fetch), img_size, img_size, 3)
-    importance_scores = torch.zeros(len(idx_fetch))
-    for i, id in enumerate(idx_fetch):
-        img_name = album_name + '/' + os.path.splitext(files[id])[0]
-        im = Image.open(os.path.join(album_path, files[id]))
-        im_resize = im.resize((img_size, img_size))
-        np_img = np.array(im_resize, dtype=np.uint8)
-        tensor_batch[i] = torch.from_numpy(np_img).float() / 255.0
-        importance_scores[i] = img_score_dict[img_name]
-    tensor_batch = tensor_batch.permute(0, 3, 1, 2)   # HWC to CHW
-    return tensor_batch, importance_scores
-
 class CUFED(Dataset):
     event_labels = ['Architecture', 'BeachTrip', 'Birthday', 'BusinessActivity',
                     'CasualFamilyGather', 'Christmas', 'Cruise', 'Graduation',
@@ -32,6 +12,26 @@ class CUFED(Dataset):
                     'PersonalArtActivity', 'PersonalMusicActivity', 'PersonalSports',
                     'Protest', 'ReligiousActivity', 'Show', 'Sports', 'ThemePark',
                     'UrbanTrip', 'Wedding', 'Zoo']
+
+    def get_album(self, album_path, album_importance, album_clip_length, img_size):
+        img_score_dict = {}
+        for _, image, score in album_importance:
+            img_score_dict[image] = score
+        album_name = os.path.basename(album_path)
+        files = os.listdir(album_path)
+        n_files = len(files)
+        idx_fetch = np.linspace(0, n_files-1, album_clip_length, dtype=int)
+        tensor_batch = torch.zeros(len(idx_fetch), img_size, img_size, 3)
+        importance_scores = torch.zeros(len(idx_fetch))
+        for i, id in enumerate(idx_fetch):
+            img_name = album_name + '/' + os.path.splitext(files[id])[0]
+            im = Image.open(os.path.join(album_path, files[id]))
+            im_resize = im.resize((img_size, img_size))
+            np_img = np.array(im_resize, dtype=np.uint8)
+            tensor_batch[i] = torch.from_numpy(np_img).float() / 255.0
+            importance_scores[i] = img_score_dict[img_name]
+        tensor_batch = tensor_batch.permute(0, 3, 1, 2)   # HWC to CHW
+        return tensor_batch, importance_scores
 
     def __init__(self, root_dir, split_dir, is_train=True, img_size=224, album_clip_length=30):
         self.img_size = img_size
@@ -79,5 +79,5 @@ class CUFED(Dataset):
         dataset_path = os.path.join(self.root_dir, 'images')
         album_path = os.path.join(dataset_path, album)
         album_importance = self.importance[album]
-        album_tensor, importance_scores = get_album(album_path, album_importance, self.album_clip_length, self.img_size)
+        album_tensor, importance_scores = self.get_album(album_path, album_importance, self.album_clip_length, self.img_size)
         return album_tensor, self.labels[idx], importance_scores
