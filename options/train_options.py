@@ -20,6 +20,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--loss', type=str, default='asymmetric', help='loss function')
         parser.add_argument('--patience', type=int, default=10, help='patience of early stopping')
         parser.add_argument('--min_delta', type=float, default=0.1, help='min delta of early stopping')
-        parser.add_argument('--threshold', type=float, default=90, help='val mAP threshold of early stopping')
+        parser.add_argument('--stopping_threshold', type=float, default=90, help='val mAP threshold of early stopping')
 
         return parser

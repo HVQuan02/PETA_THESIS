@@ -45,15 +45,15 @@ def train_one_epoch(ema_model, model, train_loader, crit, opt, sched, device):
   return epoch_loss / len(train_loader)
 
 class EarlyStopper:
-    def __init__(self, patience, min_delta, threshold):
+    def __init__(self, patience, min_delta, stopping_threshold):
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
         self.max_validation_mAP = -float('inf')
-        self.threshold = threshold
+        self.stopping_threshold = stopping_threshold
 
     def early_stop(self, validation_mAP):
-        if validation_mAP >= self.threshold:
+        if validation_mAP >= self.stopping_threshold:
             return True, True
         if validation_mAP > self.max_validation_mAP:
             self.max_validation_mAP = validation_mAP
@@ -120,7 +120,7 @@ def main():
   else:
      exit('Unknown optimization lr')
 
-  early_stopper = EarlyStopper(patience=args.patience, min_delta=args.min_delta, threshold=args.threshold)
+  early_stopper = EarlyStopper(patience=args.patience, min_delta=args.min_delta, threshold=args.stopping_threshold)
   start_epoch = 0
 
   if args.resume:
