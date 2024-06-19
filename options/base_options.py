@@ -14,7 +14,7 @@ class BaseOptions():
         parser.add_argument('--dataset_type', type=str, default='ML_CUFED')
         parser.add_argument('--num_workers', type=int, default=4, help='number of workers for data loader')
         parser.add_argument('--img_size', type=int, default=224)
-        parser.add_argument('--album_clip_length', type=int, default=30)
+        parser.add_argument('--album_clip_length', type=int, default=32)
         parser.add_argument('--remove_model_jit', type=int, default=None)
         parser.add_argument('--use_transformer', type=int, default=1)
         parser.add_argument('--transformers_pos', type=int, default=1)
